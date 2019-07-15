@@ -23,14 +23,14 @@ def generateToken(client_id, client_secret):
 
 def requestVehicles(token):
     parameters = {
-        "Authorization": "Bearer " + token
+        "Authorization": f"Bearer {token}"
     }
     return requests.get("https://api.oregonstate.edu/v1/beaverbus/vehicles", headers=parameters)
     
 def printInfo(response):
     pp = pprint.PrettyPrinter()
     
-    print(response.json()["data"][0]["attributes"]["name"], "stats:")
+    print(response.json()["data"][0]["attributes"]["name"], "Stats:")
     print("Latitude:", response.json()["data"][0]["attributes"]["latitude"])
     print("Longitude:", response.json()["data"][0]["attributes"]["longitude"])
     print("Current Speed:", response.json()["data"][0]["attributes"]["speed"])
