@@ -4,7 +4,7 @@ import config
 
 def main():
     token = generateToken(config.client_id, config.client_secret)
-    if(token):
+    if token:
         response = requestVehicles(token)
         printInfo(response)
     return 0
@@ -30,10 +30,10 @@ def requestVehicles(token):
 def printInfo(response):
     pp = pprint.PrettyPrinter()
     
-    print(response.json()["data"][0]["attributes"]["name"], " stats:")
-    print("Latitude: ", response.json()["data"][0]["attributes"]["latitude"])
-    print("Longitude: ", response.json()["data"][0]["attributes"]["longitude"])
-    print("Current Speed: ", response.json()["data"][0]["attributes"]["speed"], "\n")
+    print(response.json()["data"][0]["attributes"]["name"], "stats:")
+    print("Latitude:", response.json()["data"][0]["attributes"]["latitude"])
+    print("Longitude:", response.json()["data"][0]["attributes"]["longitude"])
+    print("Current Speed:", response.json()["data"][0]["attributes"]["speed"])
 
     print("\nHere is the raw request data:")
     pp.pprint(response.json())
