@@ -1,11 +1,12 @@
 import requests
 import pprint
-import login
+import config
 
 def main():
-    token = generateToken(login.client_id, login.client_secret)
+    token = generateToken(config.client_id, config.client_secret)
     if(token):
-        requestVehicles(token)
+        response = requestVehicles(token)
+        printInfo(response)
     return 0
 
 def generateToken(client_id, client_secret):
@@ -24,8 +25,17 @@ def requestVehicles(token):
     parameters = {
         "Authorization": "Bearer " + token
     }
-    response = requests.get("https://api.oregonstate.edu/v1/beaverbus/vehicles", headers=parameters)
+    return requests.get("https://api.oregonstate.edu/v1/beaverbus/vehicles", headers=parameters)
+    
+def printInfo(response):
     pp = pprint.PrettyPrinter()
+    
+    print(response.json()["data"][0]["attributes"]["name"], " stats:")
+    print("Latitude: ", response.json()["data"][0]["attributes"]["latitude"])
+    print("Longitude: ", response.json()["data"][0]["attributes"]["longitude"])
+    print("Current Speed: ", response.json()["data"][0]["attributes"]["speed"], "\n")
+
+    print("\nHere is the raw request data:")
     pp.pprint(response.json())
 
 main()
