@@ -1,4 +1,6 @@
 import json
+import sys
+
 import requests
 
 import config
@@ -11,7 +13,7 @@ def main():
         return 0
 
     else:
-        return 1
+        sys.exit()
 
 
 def generate_token(client_id, client_secret):
@@ -27,54 +29,64 @@ def generate_token(client_id, client_secret):
         print('Invalid credentials')
 
 
-def request_vehicles(token):
-    return requests.get(f'{osu_API}v1/beaverbus/vehicles', headers={
-        'Authorization': f'Bearer {token}'
-    })
-
-
-def request_vehicle_by_ID(token, ID):
-    return requests.get(f'{osu_API}v1/beaverbus/vehicles/{ID}', headers={
-        'Authorization': f'Bearer {token}'
-    })
+def request_vehicles(*arg):
+    if len(arg) == 1:
+        return requests.get(f'{osu_API}v1/beaverbus/vehicles', headers={
+            'Authorization': f'Bearer {arg[0]}'
+        })
+    if len(arg) == 2:
+        return requests.get(f'{osu_API}v1/beaverbus/vehicles/{arg[1]}',
+                            headers={'Authorization': f'Bearer {arg[0]}'}
+                            )
 
 
 def print_info(response):
     response_data_JSON = response.json()['data']
-    s = (
+    s1 = (
             'Enter a vehicle ID number to look at, '
             '"all" to view info of all active buses, '
             '"raw" to view raw JSON, or "exit" to quit: '
         )
+    s2 = (
+            'You have entered an invalid command,'
+            'or the bus ID you entered does not exist'
+        )
+
     while True:
-        user_input = input(s)
+        available_buses()
+        user_input = input(s1)
 
         if is_valid_bus(user_input, response_data_JSON):
-            break
+            if user_input == 'exit':
+                print('exiting...')
+                sys.exit()
+
+            elif user_input == 'all':
+                response_data_JSON = request_vehicles(token).json()['data']
+                for bus in response_data_JSON:
+                    bus = bus['attributes']
+                    print(f"Name: {bus['name']}",
+                          f"Latitude: {bus['latitude']}",
+                          f"Longitude: {bus['longitude']}",
+                          f"Current Speed: {bus['speed']}\n",
+                          sep="\n"
+                          )
+
+            elif user_input == 'raw':
+                print(json.dumps(request_vehicles(token).json(),
+                                 indent=4, sort_keys=True))
+
+            else:
+                vehicle_by_ID = request_vehicles(token, user_input)
+                response_data_JSON = vehicle_by_ID.json()['data']['attributes']
+                print(f"Name: {response_data_JSON['name']}",
+                      f"Latitude: {response_data_JSON['latitude']}",
+                      f"Longitude: {response_data_JSON['longitude']}",
+                      f"Current Speed: {response_data_JSON['speed']}\n",
+                      sep='\n'
+                      )
         else:
-            print('invalid input')
-
-    if user_input == 'exit':
-        print('exiting...')
-        exit()
-
-    elif(user_input == 'all'):
-        for bus in response_data_JSON:
-            print(f"{bus['attributes']['name']} Stats:")
-            print(f"Latitude: {bus['attributes']['latitude']}")
-            print(f"Longitude: {bus['attributes']['longitude']}")
-            print(f"Current Speed: {bus['attributes']['speed']}\n")
-
-    elif(user_input == 'raw'):
-        print(json.dumps(response.json(), indent=4, sort_keys=True))
-
-    else:
-        vehicle_by_ID = request_vehicle_by_ID(token, user_input)
-        response_data_JSON = vehicle_by_ID.json()['data']['attributes']
-        print(f"{response_data_JSON['name']} Stats:")
-        print(f"Latitude: {response_data_JSON['latitude']}")
-        print(f"Longitude: {response_data_JSON['longitude']}")
-        print(f"Current Speed: {response_data_JSON['speed']}\n")
+            print(s2)
 
 
 def is_valid_bus(user_input, response_data_JSON):
@@ -90,6 +102,17 @@ def is_valid_bus(user_input, response_data_JSON):
             return True
 
     return False
+
+
+def available_buses():
+    request = request_vehicles(token)
+
+    if len(request.json()['data']) == 0:
+        print("There are no currently active buses")
+    else:
+        print('Here are the IDs of buses currently in use:')
+        for bus in request.json()['data']:
+            print(f'{bus["id"]} ')
 
 
 osu_API = 'https://api.oregonstate.edu/'
