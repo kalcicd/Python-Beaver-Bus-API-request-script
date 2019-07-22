@@ -49,8 +49,7 @@ def menu(response):
 
     while True:
         available_buses()
-        user_input = input(instructions)
-        user_input = user_input.lower()
+        user_input = input(instructions).lower()
         response_data_json = request_vehicles().json()['data']
 
         if is_valid_bus(user_input, response_data_json):
@@ -86,10 +85,8 @@ def print_vehicle_info(path):
 
 def is_valid_bus(user_input, response_data_json):
     valid_inputs = ['all', 'exit', 'raw']
-    for bus in response_data_json:
-        valid_inputs.append(bus['id'])
-
-    return user_input.lower() in valid_inputs
+    valid_inputs += [bus['id'] for bus in response_data_json]
+    return user_input in valid_inputs
 
 
 def available_buses():
@@ -100,8 +97,7 @@ def available_buses():
         print('There are no currently active buses')
     else:
         print('Here are the IDs of buses currently in use:')
-        for bus in buses:
-            bus_ids.append(bus['id'])
+        bus_ids += [bus['id'] for bus in buses]
         print(' '.join(bus_ids))
 
 
