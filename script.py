@@ -10,7 +10,7 @@ def main():
     if token:
         response = request_vehicles()
         menu(response)
-        sys.exit(0)
+        sys.exit()
 
     else:
         sys.exit('Invalid credentials')
@@ -29,15 +29,10 @@ def generate_token(client_id, client_secret):
 
 def request_vehicles(bus_id=None):
     authorization_header = {'Authorization': f'Bearer {token}'}
-    beaverbus_vehicles = f'{osu_api}v1/beaverbus/vehicles/'
-    if bus_id:
-        return requests.get(f'{beaverbus_vehicles}{bus_id}',
-                            headers=authorization_header
-                            )
-    else:
-        return requests.get(f'{beaverbus_vehicles}',
-                            headers=authorization_header
-                            )
+    vehicles_endpoint = f'{osu_api}v1/beaverbus/vehicles/'
+    url = f'{vehicles_endpoint}{bus_id}' if bus_id else f'{vehicles_endpoint}'
+
+    return requests.get(url, headers=authorization_header)
 
 
 def menu(response):
@@ -55,6 +50,7 @@ def menu(response):
     while True:
         available_buses()
         user_input = input(instructions)
+        user_input = user_input.lower()
         response_data_json = request_vehicles().json()['data']
 
         if is_valid_bus(user_input, response_data_json):
@@ -89,28 +85,24 @@ def print_vehicle_info(path):
 
 
 def is_valid_bus(user_input, response_data_json):
-    if(
-        user_input.lower() == 'all'
-        or user_input.lower() == 'exit'
-        or user_input.lower() == 'raw'
-    ):
-        return True
-
+    valid_inputs = ['all', 'exit', 'raw']
     for bus in response_data_json:
-        if bus['id'] == user_input:
-            return True
+        valid_inputs.append(bus['id'])
 
-    return False
+    return user_input.lower() in valid_inputs
 
 
 def available_buses():
     response = request_vehicles()
-    if not response.json()['data']:
+    buses = response.json()['data']
+    bus_ids = []
+    if not buses:
         print('There are no currently active buses')
     else:
         print('Here are the IDs of buses currently in use:')
-        for bus in response.json()['data']:
-            print(f'{bus["id"]} ')
+        for bus in buses:
+            bus_ids.append(bus['id'])
+        print(' '.join(bus_ids))
 
 
 osu_api = 'https://api.oregonstate.edu/'
